@@ -10,20 +10,26 @@ Antes de crear la Spec:
 
 1. Lee los archivos relevantes de `.kiro/steering`.
 2. Inspecciona la implementación actual del repositorio.
-3. No asumas arquitectura, comportamiento o dependencias que no existan actualmente.
+3. Inspecciona específicamente el layout actual de `/home` y entiende la separación entre:
+   - el área principal del workspace;
+   - el panel secundario `Estado del entorno`;
+   - la sección `Base tecnológica`.
+4. No asumas arquitectura, comportamiento o dependencias que no existan actualmente.
 
 Presta especial atención a:
 
 - el workspace autenticado actual;
+- el componente o contenedor que representa el área principal del workspace;
+- el empty state actual `Listo para evolucionar`;
+- el panel `Estado del entorno`;
+- la visualización y comportamiento existente de `GET /hello`;
 - el flujo existente de autenticación con Cognito/OIDC;
 - el uso del access token en llamadas protegidas;
 - el JWT Authorizer de API Gateway;
-- la integración existente con `GET /hello`;
 - el contrato OpenAPI actual;
 - `apps/api` como workspace de lógica de aplicación backend;
 - la infraestructura CDK existente y sus límites entre stacks;
-- los patrones actuales de frontend, estilos y pruebas;
-- los scripts y configuración existentes cuando sean relevantes.
+- los patrones actuales de frontend, estilos y pruebas.
 
 ## Contexto
 
@@ -39,7 +45,30 @@ Actualmente ya existen:
 - AWS Lambda;
 - CloudFront + S3 privado;
 - AWS CDK;
-- un endpoint protegido `GET /hello`.
+- un endpoint protegido `GET /hello`;
+- un home autenticado preparado para evolucionar con nuevas features.
+
+El home actual ya establece una jerarquía visual deliberada:
+
+```text
+Welcome
+
+┌───────────────────────────────┬─────────────────────┐
+│                               │                     │
+│     WORKSPACE PRINCIPAL       │ ESTADO DEL ENTORNO  │
+│                               │                     │
+│   Listo para evolucionar      │ Sesión autenticada  │
+│                               │ GET /hello          │
+│                               │ API conectada       │
+│                               │ Ver respuesta       │
+└───────────────────────────────┴─────────────────────┘
+
+Base tecnológica
+```
+
+El área principal del workspace es el lugar reservado para features de producto.
+
+`Estado del entorno` es información técnica secundaria y debe permanecer como tal.
 
 El objetivo es evolucionar el sistema existente, no reconstruirlo ni reemplazar su arquitectura aceptada.
 
@@ -106,9 +135,7 @@ La lógica de aplicación debe vivir en el workspace backend existente, normalme
 
 No implementes lógica de negocio como código inline dentro de CDK.
 
-La infraestructura debe definir infraestructura.
-
-La aplicación debe contener el comportamiento de negocio.
+La infraestructura debe definir infraestructura. La aplicación debe contener el comportamiento de negocio.
 
 ## Autorización y seguridad
 
@@ -143,19 +170,72 @@ Como mínimo:
 
 Define errores claros y consistentes para entradas inválidas y fallos esperables.
 
-## Frontend
+## Frontend y layout del workspace
 
-Integra Saved Resources dentro del workspace autenticado existente.
+Saved Resources debe convertirse en el **contenido principal del workspace existente**.
 
-Preserva:
+No agregues la feature al final de la página.
 
-- el header actual;
-- el menú de usuario;
-- logout;
-- la experiencia de autenticación existente;
-- la visualización actual del estado de la API protegida `/hello`.
+No coloques Saved Resources debajo de `Estado del entorno`, debajo de `Base tecnológica` ni después de todo el contenido actual del home.
 
-Evoluciona el espacio principal del workspace para incorporar Saved Resources.
+En su lugar, **evoluciona/reemplaza el empty state actual `Listo para evolucionar` dentro del área principal del workspace**.
+
+El resultado conceptual en desktop debe ser aproximadamente:
+
+```text
+Welcome
+
+┌────────────────────────────────────┬─────────────────────┐
+│                                    │                     │
+│       RECURSOS GUARDADOS           │ ESTADO DEL ENTORNO  │
+│                                    │                     │
+│  Crear recurso                     │ Sesión autenticada  │
+│  [Título]                          │ GET /hello          │
+│  [URL] [Guardar]                   │ API conectada       │
+│                                    │ Ver respuesta       │
+│  Tus recursos                      │                     │
+│  ...                               │                     │
+│                                    │                     │
+└────────────────────────────────────┴─────────────────────┘
+
+Base tecnológica
+```
+
+La representación exacta puede ajustarse a los componentes y patrones existentes del repositorio.
+
+### Reglas importantes de jerarquía visual
+
+- Saved Resources debe ser la feature principal.
+- `Estado del entorno` debe seguir siendo técnico, compacto y secundario.
+- `GET /hello` debe continuar funcionando y visible como prueba técnica.
+- Los detalles de `/hello` deben permanecer accesibles con la interacción actual.
+- `Base tecnológica` debe permanecer como contexto secundario.
+- No dupliques el estado técnico dentro de la nueva feature.
+- No crees un segundo dashboard o una nueva sección independiente al final del home.
+- No agregues sidebar.
+
+### Comportamiento responsive
+
+En desktop:
+
+```text
+Saved Resources | Estado del entorno
+```
+
+Saved Resources debe recibir mayor jerarquía y espacio.
+
+En tablet/mobile:
+
+```text
+Welcome
+→ Saved Resources
+→ Estado del entorno
+→ Base tecnológica
+```
+
+El contenido funcional siempre debe aparecer antes que el contexto técnico secundario.
+
+## Experiencia de Saved Resources
 
 El usuario debe poder:
 
@@ -166,7 +246,11 @@ El usuario debe poder:
 - ver sus recursos existentes;
 - recibir feedback claro si una operación falla.
 
-Reutiliza los componentes, estilos, tokens y patrones visuales existentes.
+La experiencia debe integrarse visualmente con el workspace existente.
+
+Reutiliza componentes, estilos, tokens, spacing, tipografía y patrones de formulario/error/loading existentes.
+
+Evita un formulario excesivamente grande si una disposición más compacta funciona mejor dentro del área principal.
 
 No agregues sidebar ni navegación innecesaria.
 
@@ -211,7 +295,11 @@ Incluye pruebas enfocadas para validar al menos:
 - validación backend;
 - aislamiento de ownership entre usuarios;
 - estados loading / empty / success / error en frontend;
-- regresión del workspace autenticado existente.
+- integración de Saved Resources dentro del área principal del workspace;
+- preservación del panel `Estado del entorno`;
+- regresión de `GET /hello`;
+- regresión del header, user menu y logout;
+- orden correcto del contenido en mobile.
 
 Reutiliza los patrones de testing existentes en el repositorio.
 
@@ -247,13 +335,20 @@ La Spec debe dejar criterios verificables que cubran, como mínimo:
 4. `GET /resources` devuelve únicamente recursos del usuario autenticado.
 5. Los recursos persisten en DynamoDB.
 6. La UI muestra loading, empty, success y error states apropiados.
-7. Un recurso creado aparece en la experiencia del usuario sin requerir manipulación manual de datos.
-8. Inputs inválidos reciben errores claros.
-9. OpenAPI refleja el contrato implementado.
-10. La infraestructura necesaria está definida con CDK.
-11. Los permisos IAM aplican least privilege razonable.
-12. El flujo existente de Cognito y `/hello` continúa funcionando.
-13. No se agregan capacidades fuera del alcance del MVP.
+7. Saved Resources ocupa/evoluciona el área principal del workspace existente.
+8. Saved Resources NO se agrega como una sección nueva al final del home.
+9. `Estado del entorno` permanece visible como panel técnico secundario.
+10. `GET /hello` continúa funcionando y sus detalles siguen accesibles.
+11. `Base tecnológica` permanece como contexto secundario.
+12. En mobile, Saved Resources aparece antes que `Estado del entorno`.
+13. Un recurso creado aparece en la experiencia del usuario sin requerir manipulación manual de datos.
+14. Inputs inválidos reciben errores claros.
+15. OpenAPI refleja el contrato implementado.
+16. La infraestructura necesaria está definida con CDK.
+17. Los permisos IAM aplican least privilege razonable.
+18. El flujo existente de Cognito continúa funcionando.
+19. Header, user menu y logout continúan funcionando.
+20. No se agregan capacidades fuera del alcance del MVP.
 
 ## Entregable de esta etapa
 

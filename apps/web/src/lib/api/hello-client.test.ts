@@ -53,6 +53,7 @@ describe('fetchHello - response parsing', () => {
         { id: 2, name: 'Elemento 2' },
         { id: 3, name: 'Elemento 3' },
       ],
+      status: 200,
     });
   });
 
@@ -79,6 +80,7 @@ describe('fetchHello - response parsing', () => {
         { id: 1, name: 'Elemento 1' },
         { id: 2, name: 'Elemento 2' },
       ],
+      status: 200,
     });
   });
 

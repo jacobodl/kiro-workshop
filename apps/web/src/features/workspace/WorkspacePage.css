@@ -137,6 +137,19 @@
   .workspace__main {
     padding: var(--space-6) var(--space-4);
   }
+
+  /*
+   * Collapse the two-column workspace region into a single vertical column
+   * (Requirements 3.1, 3.2, 3.3, 3.4). Redefining grid-template-columns to 1fr
+   * stacks the cells; the existing column `gap` (var(--space-6)) becomes the
+   * vertical stack gap. Because the primary product workspace wrapper is first
+   * in source order, it renders above the secondary environment status region
+   * without any `order` property — keeping the accessibility reading order
+   * aligned with the visual hierarchy (primary-first, no DOM/visual mismatch).
+   */
+  .workspace__columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Centered content column for the main workspace sections. */
@@ -148,6 +161,36 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
+}
+
+/*
+ * Two-column workspace region (Requirements 2.1, 2.2, 2.3, 2.6, 5.2, 5.3).
+ *
+ * Lays the primary product workspace (dominant/wider) beside the secondary
+ * environment status (narrower) on desktop. CSS Grid expresses the
+ * dominant/narrow ratio declaratively: minmax(0, 2fr) for the primary column
+ * and minmax(0, 1fr) for the secondary, so the primary is twice the width of
+ * the secondary. The minmax(0, …) lower bound (reinforced by min-width: 0 on
+ * the cells below) lets wide content shrink instead of forcing horizontal
+ * overflow, working with the existing overflow-x guard on .workspace. Composed
+ * entirely from existing tokens — no new palette values or token system. The
+ * narrow-screen single-column collapse is added separately (task 2.2).
+ */
+.workspace__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* Primary product workspace region (dominant). */
+.workspace__primary {
+  min-width: 0; /* allow the column to shrink; prevents horizontal overflow */
+}
+
+/* Secondary environment status region (narrower). */
+.workspace__secondary {
+  min-width: 0; /* allow the column to shrink; prevents horizontal overflow */
 }
 
 /*
@@ -406,6 +449,22 @@
   gap: var(--space-3);
 }
 
+/*
+ * Discreet section-label heading (Requirement: support panel, not a page
+ * title). Styled like .foundation-strip__heading — small, uppercase,
+ * letter-spaced, muted — so "Estado del entorno" reads as a quiet aside and
+ * never competes with the single page h1.
+ */
+.protected-api-card h2 {
+  margin: 0;
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-helper);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
 .protected-api-card__supporting {
   margin: 0;
   max-width: 60ch;
@@ -510,90 +569,101 @@
 }
 
 /*
- * Received-elements region (success branch).
+ * Compact environment-status readout (success branch).
  *
- * Renders the `/hello` response `data` items as a modern, content-focused card
- * grid — distinct from the status markers above, which signal runtime state.
- * These cards are plain content (not status), so the brand gradient on the id
- * badge is decorative and meaning never relies on color alone. All values come
- * from the shared design tokens; no new tokens or dependencies are introduced.
+ * A quiet list of factual rows (session, endpoint, HTTP status, message) that
+ * keeps the support panel small and scannable rather than a prominent
+ * dashboard. Terms sit left (muted), values right (primary). All values come
+ * from the shared design tokens; no new tokens are introduced.
  */
-.protected-api-card__items-region {
+.env-status {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  gap: var(--space-1);
 }
 
-/* Small uppercase helper heading, consistent with .foundation-strip__heading. */
-.protected-api-card__items-heading {
-  margin: 0;
-  font-size: var(--font-size-helper);
-  line-height: var(--line-height-helper);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.env-status__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.env-status__term {
   color: var(--color-text-secondary);
 }
 
-/* Responsive card grid. */
-.protected-api-card__items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Individual item card. */
-.protected-api-card__item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  background: var(--color-white);
-  box-shadow: var(--card-shadow);
-  transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.protected-api-card__item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0px 6px 16px rgba(15, 29, 41, 0.14);
+.env-status__value {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /*
- * Id badge: a rounded square carrying the blue -> cyan brand gradient (the same
- * gradient used by the header brand-mark and the account avatar in this file).
+ * Received-elements disclosure (success branch).
+ *
+ * The `/hello` response items are tucked into a collapsed native <details> so
+ * they are available on demand without dominating the compact support panel.
+ * Inside, a small uppercase caption labels a compact list of id/name rows —
+ * no card grid, no shadows, no brand chrome. All values come from the shared
+ * design tokens.
  */
-.protected-api-card__item-badge {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--border-radius-sm);
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-blue) 0%,
-    var(--color-bright-cyan) 100%
-  );
-  color: var(--color-white);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-semibold);
-  line-height: 1;
+.protected-api-card__details {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
 }
 
-/* Item name: the primary label of each card. */
-.protected-api-card__item-name {
-  min-width: 0;
-  font-size: var(--font-size-body);
+.protected-api-card__details-summary {
+  cursor: pointer;
+  font-size: var(--font-size-label);
+  color: var(--color-primary-blue);
   font-weight: var(--font-weight-medium);
+}
+
+.protected-api-card__details-summary:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+.protected-api-card__items-caption {
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: var(--font-size-helper);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.protected-api-card__items-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.protected-api-card__items-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+}
+
+.protected-api-card__items-id {
+  flex: none;
+  min-width: 1.5em;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.protected-api-card__items-name {
   color: var(--color-text-primary);
 }

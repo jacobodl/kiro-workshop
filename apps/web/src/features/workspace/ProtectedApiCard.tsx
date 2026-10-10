@@ -44,11 +44,19 @@ import {
  * - Idle/loading render nothing while success and error are mutually exclusive
  *   branches of a single state value, so a pending verification can never
  *   render success text concurrently (Requirements 10.2, 12.1).
- * - Success shows a restrained positive label (`API protegida conectada`), the
- *   `/hello` `message`, and a note that the message came from the protected
- *   backend via the Cognito session (Requirements 11.1, 11.2). No raw
- *   token/claim/metadata — not even the HTTP status — is rendered (Requirements
- *   9, 11.3).
+ * - This is a DISCREET SUPPORT panel, not a second page title: the heading
+ *   (`Estado del entorno`) is styled as a small, muted section label so it
+ *   never competes with the single page `h1`.
+ * - Success is a COMPACT, factual status readout rather than a prominent
+ *   dashboard. It keeps the restrained positive label (`API protegida
+ *   conectada`) with its non-color success marker, then a short list of facts:
+ *   the authenticated session, the connected API, the `GET /hello` endpoint,
+ *   the factual HTTP success status (e.g. `HTTP 200`), and the backend
+ *   `message` when present (Requirements 11.1, 11.2). The received `/hello`
+ *   items are tucked into a collapsed `<details>` disclosure ("Ver respuesta")
+ *   so they are available on demand without dominating the panel. No raw
+ *   token/claim/metadata is rendered; only the factual HTTP status code is
+ *   surfaced (Requirements 9, 11.3).
  * - Failure shows a concise label distinguishing an authorization problem
  *   (401/403 → `unauthorized`) from any other failure (`error`) with a short
  *   non-sensitive explanation; the internal HTTP `status` is kept in state for
@@ -63,7 +71,7 @@ import {
 type Status =
   | { phase: 'idle' }
   | { phase: 'loading' }
-  | { phase: 'success'; message: string; items: HelloItem[] }
+  | { phase: 'success'; message: string; items: HelloItem[]; status: number }
   | { phase: 'error'; kind: 'unauthorized' | 'error'; status?: number };
 
 const SUPPORTING_TEXT =
@@ -110,6 +118,7 @@ export const ProtectedApiCard = () => {
             phase: 'success',
             message: result.message,
             items: result.items,
+            status: result.status,
           });
         } else {
           setStatus({ phase: 'error', kind: result.kind, status: result.status });
@@ -138,7 +147,7 @@ export const ProtectedApiCard = () => {
 
   return (
     <section className="protected-api-card" aria-labelledby="protected-api-heading">
-      <h2 id="protected-api-heading">API protegida</h2>
+      <h2 id="protected-api-heading">Estado del entorno</h2>
       <p className="protected-api-card__supporting">{SUPPORTING_TEXT}</p>
 
       <div className="protected-api-card__status" aria-live="polite">
@@ -155,34 +164,47 @@ export const ProtectedApiCard = () => {
               <span className="protected-api-card__marker protected-api-card__marker--success" aria-hidden="true" />
               API protegida conectada
             </p>
-            {status.message && (
-              <p className="protected-api-card__message">{status.message}</p>
-            )}
-            <p className="protected-api-card__note">
-              Mensaje recibido del backend protegido mediante tu sesión de
-              Cognito.
-            </p>
+            <ul className="env-status">
+              <li className="env-status__row">
+                <span className="env-status__term">Sesión</span>
+                <span className="env-status__value">Autenticada</span>
+              </li>
+              <li className="env-status__row">
+                <span className="env-status__term">Endpoint</span>
+                <span className="env-status__value">GET /hello</span>
+              </li>
+              <li className="env-status__row">
+                <span className="env-status__term">Estado HTTP</span>
+                <span className="env-status__value">HTTP {status.status}</span>
+              </li>
+              {status.message && (
+                <li className="env-status__row">
+                  <span className="env-status__term">Mensaje</span>
+                  <span className="env-status__value">{status.message}</span>
+                </li>
+              )}
+            </ul>
             {status.items.length > 0 && (
-              <div className="protected-api-card__items-region">
-                <h3 className="protected-api-card__items-heading">
+              <details className="protected-api-card__details">
+                <summary className="protected-api-card__details-summary">
+                  Ver respuesta
+                </summary>
+                <p className="protected-api-card__items-caption">
                   Elementos recibidos
-                </h3>
-                <ul className="protected-api-card__items">
+                </p>
+                <ul className="protected-api-card__items-list">
                   {status.items.map((item) => (
-                    <li key={item.id} className="protected-api-card__item">
-                      <span
-                        className="protected-api-card__item-badge"
-                        aria-hidden="true"
-                      >
+                    <li key={item.id} className="protected-api-card__items-row">
+                      <span className="protected-api-card__items-id">
                         {item.id}
                       </span>
-                      <span className="protected-api-card__item-name">
+                      <span className="protected-api-card__items-name">
                         {item.name}
                       </span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </details>
             )}
           </div>
         )}

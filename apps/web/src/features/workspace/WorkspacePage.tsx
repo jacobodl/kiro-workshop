@@ -11,12 +11,14 @@ import './WorkspacePage.css';
  * Authenticated Workshop Workspace page (served at `/home` inside
  * `ProtectedRoute`), replacing the previous minimal `HomePage`.
  *
- * Composition shell (task 3.1): reads `useAuth()`, resolves the best-available
- * identifier via the existing `resolveUserIdentifier` (`email →
- * preferred_username → sub`), and composes the application header plus a
- * `<main>` landmark containing the welcome section, the protected-API status
- * area, the secondary static foundation strip, and the Saved Resources
- * section.
+ * Composition shell: reads `useAuth()`, resolves the best-available identifier
+ * via the existing `resolveUserIdentifier` (`email → preferred_username →
+ * sub`), and composes the application header plus a `<main>` landmark. The main
+ * flow places the welcome section (full width) above a two-column region, with
+ * the primary product workspace region (dominant, first in source order) beside
+ * the secondary environment status region (`ProtectedApiCard`, narrower), and
+ * the static foundation strip as a full-width secondary band below. The wrapper
+ * `<div>`s are presentational grid cells with no heading and no landmark role.
  *
  * This page owns no business state and uses no global store. The only runtime
  * state lives locally inside `ProtectedApiCard` (request status) and
@@ -39,9 +41,19 @@ export const WorkspacePage = () => {
       <WorkspaceHeader identifier={identifier} />
       <main className="workspace__main">
         <WelcomeSection />
-        <ProtectedApiCard />
+
+        <div className="workspace__columns">
+          {/* Primary product workspace region — dominant, first in source order */}
+          <div className="workspace__primary">
+            <WorkspaceEmptyState />
+          </div>
+          {/* Secondary environment status region — narrower, after primary */}
+          <div className="workspace__secondary">
+            <ProtectedApiCard />
+          </div>
+        </div>
+
         <FoundationStrip />
-        <SavedResourcesSection />
       </main>
     </div>
   );

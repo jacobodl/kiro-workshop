@@ -194,7 +194,11 @@ describe('ProtectedApiCard - automatic protected /hello verification', () => {
     expect(
       screen.getByText('Hola desde el backend protegido'),
     ).toBeInTheDocument();
-    // The `data` items render as a labelled list of cards (names + ids).
+    // The factual HTTP success status is surfaced in the compact readout.
+    expect(await screen.findByText('HTTP 200')).toBeInTheDocument();
+    // The `data` items live inside the "Ver respuesta" disclosure (compact
+    // id/name rows), still queryable by text while collapsed.
+    expect(screen.getByText('Ver respuesta')).toBeInTheDocument();
     expect(screen.getByText('Elementos recibidos')).toBeInTheDocument();
     expect(screen.getByText('Elemento 1')).toBeInTheDocument();
     expect(screen.getByText('Elemento 2')).toBeInTheDocument();

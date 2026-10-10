@@ -9,9 +9,10 @@ export type HelloItem = { id: number; name: string };
  * Discriminated result of an authenticated `GET /hello` request.
  *
  * On success, the human-facing `message` AND the `data` items (each an
- * `id`/`name` pair) are surfaced to the UI — the access token, the
- * `Authorization` header, and the `timestamp` field of the `/hello` response
- * are never returned.
+ * `id`/`name` pair) are surfaced to the UI, now alongside the HTTP success
+ * `status` code (e.g. 200) so callers can present a factual environment-status
+ * line — the access token, the `Authorization` header, and the `timestamp`
+ * field of the `/hello` response are never returned.
  *
  * On failure, `kind` distinguishes an authentication/authorization problem
  * (`unauthorized`, from HTTP 401/403) from any other failure (`error`, covering
@@ -19,7 +20,7 @@ export type HelloItem = { id: number; name: string };
  * HTTP status code when one is available.
  */
 export type HelloResult =
-  | { ok: true; message: string; items: HelloItem[] }
+  | { ok: true; message: string; items: HelloItem[]; status: number }
   | { ok: false; kind: 'unauthorized' | 'error'; status?: number };
 
 /**
@@ -102,7 +103,7 @@ export const fetchHello = async (accessToken: string): Promise<HelloResult> => {
           typeof (entry as { id?: unknown }).id === 'number' &&
           typeof (entry as { name?: unknown }).name === 'string',
       );
-      return { ok: true, message, items };
+      return { ok: true, message, items, status: response.status };
     } catch {
       // 2xx with an unreadable/invalid body is treated as a generic failure.
       return { ok: false, kind: 'error', status: response.status };
