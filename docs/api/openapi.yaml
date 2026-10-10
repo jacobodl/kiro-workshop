@@ -48,6 +48,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HelloErrorResponse'
+  /resources:
+    post:
+      operationId: createResource
+      summary: Create a saved resource
+      description: >
+        Create a saved resource (a `title` and a `url`) owned by the
+        authenticated caller. Only `title` and `url` are accepted; any other
+        client-supplied fields (including `resourceId`, `createdAt`, or an
+        ownership field) are ignored. `resourceId` and `createdAt` are generated
+        server-side, and ownership is derived from the validated Cognito JWT.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceRequest'
+      responses:
+        '201':
+          description: The resource was created and is returned to the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: >
+            Invalid request: missing/non-JSON/non-object body, empty `title`
+            after trimming, or a `url` that is not a valid absolute `http(s)`
+            URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: >
+            Missing or invalid Cognito access token. Rejected by the API Gateway
+            JWT Authorizer before the handler runs; no response body.
+        '500':
+          description: Internal service error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listResources
+      summary: List the caller's saved resources
+      description: >
+        List only the saved resources owned by the authenticated caller.
+        Ownership is derived from the validated Cognito JWT; resources belonging
+        to other users are never returned. Returns an empty list when the caller
+        has no resources.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: The caller's saved resources (empty list when none exist).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+        '401':
+          description: >
+            Missing or invalid Cognito access token. Rejected by the API Gateway
+            JWT Authorizer before the handler runs; no response body.
+        '500':
+          description: Internal service error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -105,3 +176,67 @@ components:
             endpoint intentionally keeps its existing `{ message }` body and is
             not retrofitted to the standard error shape.
           example: Error interno del servicio
+    Resource:
+      type: object
+      required:
+        - resourceId
+        - title
+        - url
+        - createdAt
+      properties:
+        resourceId:
+          type: string
+          description: Server-generated identifier, unique within an owner.
+        title:
+          type: string
+          description: User-supplied title of the saved resource.
+        url:
+          type: string
+          format: uri
+          description: User-supplied absolute `http(s)` URL of the resource.
+        createdAt:
+          type: string
+          format: date-time
+          description: Server-generated ISO-8601 UTC creation timestamp.
+    CreateResourceRequest:
+      type: object
+      required:
+        - title
+        - url
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          description: Title of the resource to save.
+        url:
+          type: string
+          format: uri
+          description: Absolute `http(s)` URL to save.
+    ResourceList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: The caller's saved resources (empty when none exist).
+          items:
+            $ref: '#/components/schemas/Resource'
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Stable, machine-readable error code.
+            message:
+              type: string
+              description: Human-readable, non-sensitive error message.

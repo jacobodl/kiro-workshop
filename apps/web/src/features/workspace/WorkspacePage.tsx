@@ -4,7 +4,7 @@ import { WorkspaceHeader } from './WorkspaceHeader';
 import { WelcomeSection } from './WelcomeSection';
 import { ProtectedApiCard } from './ProtectedApiCard';
 import { FoundationStrip } from './FoundationStrip';
-import { WorkspaceEmptyState } from './WorkspaceEmptyState';
+import { SavedResourcesSection } from '../resources/SavedResourcesSection';
 import './WorkspacePage.css';
 
 /**
@@ -15,8 +15,8 @@ import './WorkspacePage.css';
  * identifier via the existing `resolveUserIdentifier` (`email →
  * preferred_username → sub`), and composes the application header plus a
  * `<main>` landmark containing the welcome section, the protected-API status
- * area, the secondary static foundation strip, and the intentional empty
- * workspace region.
+ * area, the secondary static foundation strip, and the Saved Resources
+ * section.
  *
  * This page owns no business state and uses no global store. The only runtime
  * state lives locally inside `ProtectedApiCard` (request status) and
@@ -41,7 +41,7 @@ export const WorkspacePage = () => {
         <WelcomeSection />
         <ProtectedApiCard />
         <FoundationStrip />
-        <WorkspaceEmptyState />
+        <SavedResourcesSection />
       </main>
     </div>
   );

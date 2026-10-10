@@ -1,0 +1,290 @@
+/*
+ * Saved Resources section (Requirements R5, R10, R12).
+ *
+ * The first real business surface in the authenticated workspace main area.
+ * Reuses the shared design tokens (spacing, palette, type scale, radii,
+ * --card-border/--card-shadow, transitions) and the established card/section/
+ * button/aria-live patterns from WorkspacePage.css and ProtectedApiCard — no
+ * new icon set, CSS framework, animation library, or state-management library.
+ *
+ * Structure:
+ *   .saved-resources            section wrapper (title + supporting + form + list)
+ *   .saved-resources__form      the title + url create form
+ *   .saved-resources__list      the caller's resources (or the empty state)
+ */
+
+.saved-resources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.saved-resources__supporting {
+  margin: 0;
+  max-width: 60ch;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body-text);
+  color: var(--color-text-secondary);
+}
+
+/*
+ * Create form (R10.3): a single calm card with the title + url fields and ONE
+ * primary action ("Guardar"). Reuses the shared card tokens so it sits beside
+ * the ProtectedApiCard consistently.
+ */
+.saved-resources__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: var(--card-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-white);
+  box-shadow: var(--card-shadow);
+}
+
+.saved-resources__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.saved-resources__label {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.saved-resources__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body-text);
+  transition: border-color var(--transition-fast);
+}
+
+.saved-resources__input:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 1px;
+  border-color: var(--color-primary-blue);
+}
+
+/* Invalid field: a non-color cue (thicker, darker border) plus the hint text. */
+.saved-resources__input--invalid {
+  border-width: 2px;
+  border-color: var(--color-text-primary);
+}
+
+/*
+ * Inline field hint (R10.8). Conveyed as text so the meaning never relies on
+ * color alone; the secondary tone keeps it quiet until it matters.
+ */
+.saved-resources__hint {
+  margin: 0;
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-helper);
+  color: var(--color-text-primary);
+}
+
+.saved-resources__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/*
+ * The single primary action ("Guardar"). Carries the blue -> cyan brand
+ * gradient used elsewhere in the workspace; disabled while submitting.
+ */
+.saved-resources__submit {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-5);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-blue) 0%,
+    var(--color-bright-cyan) 100%
+  );
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+.saved-resources__submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.saved-resources__submit:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+.saved-resources__submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/*
+ * Form-level status line (create submitting/error). Text-based, aria-live so
+ * the outcome is announced; a create failure never renders a false success.
+ */
+.saved-resources__form-status {
+  margin: 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-primary);
+}
+
+/* List region title. */
+.saved-resources__list-heading {
+  margin: 0;
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-helper);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/*
+ * List status (loading / list error). Rendered inside an aria-live region in
+ * the section so transitions are announced (R10.4, R10.7).
+ */
+.saved-resources__status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.saved-resources__status-text {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body-text);
+  color: var(--color-text-primary);
+}
+
+.saved-resources__status-note {
+  margin: 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-label);
+  color: var(--color-text-secondary);
+}
+
+/* Manual retry after a list failure, matching ProtectedApiCard's retry. */
+.saved-resources__retry {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-white);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-label);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.saved-resources__retry:hover {
+  background: var(--color-bg-muted);
+}
+
+.saved-resources__retry:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+}
+
+/*
+ * Empty state (R10.5): a calm, intentional block — NOT an error — shown when
+ * the caller has no resources. Mirrors the dashed-frame empty-state treatment
+ * already used by WorkspaceEmptyState.
+ */
+.saved-resources__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 140px;
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-bg-muted);
+}
+
+.saved-resources__empty-text {
+  margin: 0;
+  max-width: 48ch;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body-text);
+  color: var(--color-text-primary);
+}
+
+/* Resource list (success): a vertical stack of cards. */
+.saved-resources__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-resources__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-white);
+  box-shadow: var(--card-shadow);
+}
+
+/*
+ * Resource title as a link to its url. Long URLs/titles must wrap instead of
+ * forcing horizontal overflow on narrow layouts (R10 styling guidance).
+ */
+.saved-resources__item-link {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body-text);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-blue);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.saved-resources__item-link:hover {
+  text-decoration: underline;
+}
+
+.saved-resources__item-link:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.saved-resources__item-created {
+  font-size: var(--font-size-helper);
+  line-height: var(--line-height-helper);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 768px) {
+  .saved-resources__form {
+    padding: var(--space-4);
+  }
+}

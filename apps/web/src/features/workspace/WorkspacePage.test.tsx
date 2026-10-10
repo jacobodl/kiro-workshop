@@ -1,6 +1,13 @@
 /**
  * Tests for the authenticated Workshop Workspace page served at `/home`
- * inside `ProtectedRoute` (tasks 3.1 / 3.2, task 9.1).
+ * inside `ProtectedRoute` (tasks 3.1 / 3.2, task 9.2).
+ *
+ * These are focused page-composition tests: they assert that `WorkspacePage`
+ * stitches the header, welcome, protected-API card, and the Saved Resources
+ * section together correctly, and that route protection and token privacy are
+ * preserved. The data-fetching children (`ProtectedApiCard`,
+ * `SavedResourcesSection`) are isolated from the network by stubbing their
+ * clients, so these tests stay deterministic and free of env/network coupling.
  *
  * Verifies:
  * - `/home` is protected: an unauthenticated visit redirects to `/login`
@@ -8,8 +15,11 @@
  * - An authenticated session renders the workspace with the identifier resolved
  *   by the existing `resolveUserIdentifier` (email → preferred_username → sub);
  *   the email claim is shown (R22.2).
+ * - The new composition: the Saved Resources section (replacing the old empty
+ *   state) renders alongside the preserved header/account menu, the `/hello`
+ *   `ProtectedApiCard`, and the single page `h1` (R10, R11).
  * - The Cognito access token (`auth.user.access_token`) never appears anywhere
- *   in the rendered DOM (R22.9).
+ *   in the rendered DOM (R22.9, R10).
  * - Reuses the established `vi.mock('react-oidc-context')` + `MemoryRouter`
  *   patterns used by the other auth tests (R22.12).
  */
@@ -25,7 +35,8 @@ const SECRET_ACCESS_TOKEN = 'super-secret-access-token-value-should-never-render
 
 // Controllable auth mock so each test can toggle authentication state and the
 // resolved profile claims. Shared by both `ProtectedRoute` and `WorkspacePage`
-// (and the nested `AccountMenu` / `ProtectedApiCard`) via `useAuth()`.
+// (and the nested `AccountMenu` / `ProtectedApiCard` / `SavedResourcesSection`)
+// via `useAuth()`.
 const authState = {
   isAuthenticated: false,
   isLoading: false,
@@ -54,6 +65,18 @@ vi.mock('../../lib/api/hello-client', () => ({
   fetchHello: vi
     .fn()
     .mockResolvedValue({ ok: true, message: 'Hola', items: [] }),
+}));
+
+// Keep the automatic `GET /resources` from the mounted `SavedResourcesSection`
+// out of these page tests, the same way `hello-client` is stubbed. Without this
+// the section would call `resolveApiBaseUrl()` (reading `VITE_API_URL`) and
+// `fetch` on mount, coupling a page-composition test to env/network. The stub
+// resolves the list to a deterministic empty state so we can assert the Saved
+// Resources empty-state copy renders. `createResource` is stubbed too (the form
+// mounts but is never submitted here).
+vi.mock('../../lib/api/resources-client', () => ({
+  listResources: vi.fn().mockResolvedValue({ ok: true, items: [] }),
+  createResource: vi.fn().mockResolvedValue({ ok: false, kind: 'error' }),
 }));
 
 // Keep the shared logout helper inert (invoked by the nested AccountMenu only
@@ -85,6 +108,19 @@ const renderHomeRoute = () =>
     </MemoryRouter>,
   );
 
+const asAuthenticatedUser = () => {
+  authState.isAuthenticated = true;
+  authState.user = {
+    expired: false,
+    access_token: SECRET_ACCESS_TOKEN,
+    profile: {
+      email: 'ada@example.com',
+      preferred_username: 'ada',
+      sub: 'cognito-sub-123',
+    },
+  };
+};
+
 describe('WorkspacePage - protected /home workspace', () => {
   beforeEach(() => {
     authState.isAuthenticated = false;
@@ -107,21 +143,13 @@ describe('WorkspacePage - protected /home workspace', () => {
   });
 
   it('renders the workspace for an authenticated user with the resolved email identifier', async () => {
-    authState.isAuthenticated = true;
-    authState.user = {
-      expired: false,
-      access_token: SECRET_ACCESS_TOKEN,
-      profile: {
-        email: 'ada@example.com',
-        preferred_username: 'ada',
-        sub: 'cognito-sub-123',
-      },
-    };
+    asAuthenticatedUser();
 
     renderHomeRoute();
 
-    // Let the auto `GET /hello` state update from the mounted ProtectedApiCard
-    // settle inside act() so no post-render warning is emitted.
+    // Let the auto `GET /hello` and `GET /resources` state updates from the
+    // mounted ProtectedApiCard and SavedResourcesSection settle inside act() so
+    // no post-render warning is emitted.
     await act(async () => {
       await Promise.resolve();
     });
@@ -142,21 +170,60 @@ describe('WorkspacePage - protected /home workspace', () => {
     expect(within(header).queryByText('cognito-sub-123')).not.toBeInTheDocument();
   });
 
+  it('renders the new composition: Saved Resources section replaces the empty state while the header, account menu, protected-API card, and single h1 are preserved', async () => {
+    asAuthenticatedUser();
+
+    renderHomeRoute();
+
+    // Let the mounted sections' on-mount requests resolve.
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Exactly one page-level h1 lives in WelcomeSection.
+    const h1s = screen.getAllByRole('heading', { level: 1 });
+    expect(h1s).toHaveLength(1);
+    expect(h1s[0]).toHaveTextContent('Bienvenido al workspace');
+
+    // Preserved header (banner) with the resolved identifier and the account
+    // menu trigger (we assert its presence only; we never open it / log out).
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText('ada@example.com')).toBeInTheDocument();
+    expect(
+      within(header).getByRole('button', { name: 'Cuenta de usuario' }),
+    ).toBeInTheDocument();
+
+    // Preserved `/hello` ProtectedApiCard: its stable section heading renders,
+    // and (via the stubbed success result) its connected label resolves.
+    expect(
+      screen.getByRole('heading', { name: 'API protegida' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText('API protegida conectada'),
+    ).toBeInTheDocument();
+
+    // New Saved Resources section renders in place of the old empty state.
+    expect(
+      screen.getByRole('heading', { name: 'Recursos guardados' }),
+    ).toBeInTheDocument();
+    // The stubbed `listResources` resolves to an empty list, so the section
+    // settles on its calm empty state (NOT an error).
+    expect(
+      await screen.findByText(/Aún no has guardado recursos/i),
+    ).toBeInTheDocument();
+
+    // The previous WorkspaceEmptyState ("Listo para construir") is gone.
+    expect(screen.queryByText('Listo para construir')).not.toBeInTheDocument();
+  });
+
   it('never renders the access token anywhere in the DOM', async () => {
-    authState.isAuthenticated = true;
-    authState.user = {
-      expired: false,
-      access_token: SECRET_ACCESS_TOKEN,
-      profile: {
-        email: 'ada@example.com',
-        preferred_username: 'ada',
-        sub: 'cognito-sub-123',
-      },
-    };
+    asAuthenticatedUser();
 
     const { container } = renderHomeRoute();
 
-    // Settle the auto `GET /hello` state update inside act().
+    // Settle the auto `GET /hello` and `GET /resources` state updates inside
+    // act(). The resources client is stubbed, so the token is never handed to a
+    // real request or surfaced anywhere.
     await act(async () => {
       await Promise.resolve();
     });
