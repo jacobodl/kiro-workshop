@@ -208,7 +208,7 @@
 /*
  * Empty state (R10.5): a calm, intentional block — NOT an error — shown when
  * the caller has no resources. Mirrors the dashed-frame empty-state treatment
- * already used by WorkspaceEmptyState.
+ * used elsewhere in the workspace.
  */
 .saved-resources__empty {
   display: flex;

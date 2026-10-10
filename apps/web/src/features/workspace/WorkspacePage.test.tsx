@@ -195,12 +195,11 @@ describe('WorkspacePage - protected /home workspace', () => {
       screen.getByRole('heading', { level: 1, name: 'Bienvenido al workspace' }),
     ).toBeInTheDocument();
 
-    // Primary product workspace region. Per the design dependency note, the
-    // committed tree composes WorkspaceEmptyState (SavedResourcesSection does
-    // not exist yet), so assert against the actual rendered primary component —
-    // the intentional empty-state content.
+    // Primary product workspace region: the primary cell now renders the Saved
+    // Resources section (the first real business surface), replacing the old
+    // intentional empty-state placeholder. Assert against its section heading.
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Listo para evolucionar' }),
+      screen.getByRole('heading', { level: 2, name: 'Recursos guardados' }),
     ).toBeInTheDocument();
 
     // Secondary environment status region: the `/hello` ProtectedApiCard, keyed
@@ -253,12 +252,13 @@ describe('WorkspacePage - protected /home workspace', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    // The empty-state ("Listo para evolucionar") lives inside the primary cell and
-    // the `/hello` card ("Estado del entorno") inside the secondary cell — confirms
-    // the regions are mapped to the right content, not just the right order.
+    // The Saved Resources section ("Recursos guardados") lives inside the primary
+    // cell and the `/hello` card ("Estado del entorno") inside the secondary cell
+    // — confirms the regions are mapped to the right content, not just the right
+    // order.
     expect(
       primary!.contains(
-        screen.getByRole('heading', { level: 2, name: 'Listo para evolucionar' }),
+        screen.getByRole('heading', { level: 2, name: 'Recursos guardados' }),
       ),
     ).toBe(true);
     expect(
@@ -353,12 +353,11 @@ describe('WorkspacePage - protected /home workspace', () => {
       screen.getByRole('heading', { level: 2, name: 'Estado del entorno' }),
     ).toBeInTheDocument();
 
-    // The primary product workspace region is present (R4.5). Per the design
-    // dependency note, SavedResourcesSection does not exist yet, so the primary
-    // region holds WorkspaceEmptyState — assert against its heading, consistent
-    // with tasks 4.1/4.2.
+    // The primary product workspace region is present (R4.5): the primary region
+    // now renders the Saved Resources section (replacing the old empty state) —
+    // assert against its section heading.
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Listo para evolucionar' }),
+      screen.getByRole('heading', { level: 2, name: 'Recursos guardados' }),
     ).toBeInTheDocument();
   });
 });

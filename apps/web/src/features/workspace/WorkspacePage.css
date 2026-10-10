@@ -373,64 +373,6 @@
 }
 
 /*
- * Workspace empty state (Requirements 15, 16, 17, 19).
- *
- * The primary workspace region, presented as a clean, intentional empty state
- * rather than a dashboard. A single calm, centered block framed by a dashed
- * border communicates that the surface is deliberately ready for the next
- * workshop feature — no fake resource lists, charts, metrics, navigation
- * modules, or placeholder business data. All values come from the shared design
- * tokens (spacing, radii, palette, type scale); no new tokens, no card shadow,
- * no gradient, no dashboard chrome. The dashed outline + muted wash reads as an
- * intentional placeholder slot, keeping it distinct from the solid foundation
- * chips above while staying restrained and professional.
- */
-.workspace-empty-state {
-  display: flex;
-}
-
-.workspace-empty-state__frame {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  min-height: 220px;
-  padding: var(--space-8) var(--space-6);
-  text-align: center;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius-lg);
-  background: var(--color-bg-muted);
-}
-
-.workspace-empty-state__title {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.workspace-empty-state__copy {
-  margin: 0;
-  max-width: 48ch;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-body-text);
-  /* AA-safe secondary tone on the muted empty-state fill (Requirement 19.5). */
-  color: var(--workspace-text-secondary-on-muted);
-}
-
-/*
- * Narrow screens (<= --breakpoint-mobile, 768px): reduce the vertical presence
- * and inner padding so the empty state stays proportionate and avoids excess
- * whitespace on small viewports, while remaining a clear intentional region.
- */
-@media (max-width: 768px) {
-  .workspace-empty-state__frame {
-    min-height: 180px;
-    padding: var(--space-7) var(--space-4);
-  }
-}
-
-/*
  * Protected API card (Requirements 8, 9, 10, 11, 12, 19).
  *
  * The card automatically verifies the protected `GET /hello` endpoint on load
